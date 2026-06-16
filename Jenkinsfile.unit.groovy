@@ -17,28 +17,28 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building stage!'
-                sh 'make build'
+                sh 'export PATH="/usr/local/bin:$PATH" && make build'
             }
         }
         
         stage('Unit tests') {
             steps {
                 echo 'Running Unit tests...'
-                sh 'make test-unit'
+                sh 'export PATH="/usr/local/bin:$PATH" && make test-unit'
             }
         }
         
         stage('API tests') {
             steps {
                 echo 'Running API tests...'
-                sh 'make test-api'
+                sh 'export PATH="/usr/local/bin:$PATH" && make test-api'
             }
         }
         
         stage('E2E tests') {
             steps {
                 echo 'Running E2E tests...'
-                sh 'make test-e2e'
+                sh 'export PATH="/usr/local/bin:$PATH" && make test-e2e'
             }
         }
     }
