@@ -10,8 +10,16 @@ pipeline {
         stage('Cleanup') {
             steps {
                 echo 'Cleaning up old containers and networks...'
-                sh 'docker rm -f apiserver api-tests e2e-tests calc-web 2>/dev/null || true'
-                sh 'docker network rm calc-test-api calc-test-e2e 2>/dev/null || true'
+                sh '''
+                    # Kill all containers that might be using ports
+                    docker kill $(docker ps -a -q) 2>/dev/null || true
+                    sleep 2
+                    # Remove all stopped containers
+                    docker rm -f $(docker ps -a -q) 2>/dev/null || true
+                    # Remove old networks
+                    docker network rm calc-test-api calc-test-e2e 2>/dev/null || true
+                    echo "Cleanup completed"
+                '''
             }
         }
         
