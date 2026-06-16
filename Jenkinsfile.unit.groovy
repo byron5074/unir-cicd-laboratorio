@@ -59,7 +59,15 @@ pipeline {
         stage('E2E tests') {
             steps {
                 echo 'Running E2E tests...'
-                sh 'export PATH="/usr/local/bin:$PATH" && make test-e2e'
+                sh 'export PATH="/usr/local/bin:$PATH" && docker network create calc-test-e2e || true'
+                sh 'export PATH="/usr/local/bin:$PATH" && docker run -d --network calc-test-e2e --env PYTHONPATH=/opt/calc --name apiserver --env FLASK_APP=app/api.py -p 5001:5000 -w /opt/calc calculator-app:latest flask run --host=0.0.0.0'
+                sh 'export PATH="/usr/local/bin:$PATH" && docker run -d --network calc-test-e2e --name calc-web -p 80:80 calc-web'
+                sh 'export PATH="/usr/local/bin:$PATH" && docker create --network calc-test-e2e --name e2e-tests cypress/included:4.9.0 --browser chrome || true'
+                sh 'export PATH="/usr/local/bin:$PATH" && docker cp ./test/e2e/cypress.json e2e-tests:/cypress.json'
+                sh 'export PATH="/usr/local/bin:$PATH" && docker cp ./test/e2e/cypress e2e-tests:/cypress'
+                sh 'export PATH="/usr/local/bin:$PATH" && docker start -a e2e-tests || true'
+                sh 'export PATH="/usr/local/bin:$PATH" && docker cp e2e-tests:/results ./ || true'
+                sh 'export PATH="/usr/local/bin:$PATH" && docker stop apiserver calc-web e2e-tests 2>/dev/null || true && docker rm --force apiserver calc-web e2e-tests 2>/dev/null || true && docker network rm calc-test-e2e 2>/dev/null || true'
             }
         }
     }
