@@ -7,6 +7,14 @@ pipeline {
     }
     
     stages {
+        stage('Cleanup') {
+            steps {
+                echo 'Cleaning up old containers and networks...'
+                sh 'docker rm -f apiserver api-tests e2e-tests calc-web 2>/dev/null || true'
+                sh 'docker network rm calc-test-api calc-test-e2e 2>/dev/null || true'
+            }
+        }
+        
         stage('Source') {
             steps {
                 echo 'Cloning repository...'
