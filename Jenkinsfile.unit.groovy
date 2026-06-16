@@ -48,7 +48,11 @@ pipeline {
         stage('API tests') {
             steps {
                 echo 'Running API tests...'
-                sh 'export PATH="/usr/local/bin:$PATH" && make test-api'
+                sh 'export PATH="/usr/local/bin:$PATH" && docker network create calc-test-api || true'
+                sh 'export PATH="/usr/local/bin:$PATH" && docker run -d --network calc-test-api --env PYTHONPATH=/opt/calc --name apiserver --env FLASK_APP=app/api.py -p 5001:5000 -w /opt/calc calculator-app:latest flask run --host=0.0.0.0'
+                sh 'sleep 3 && export PATH="/usr/local/bin:$PATH" && docker run --network calc-test-api --name api-tests --env PYTHONPATH=/opt/calc --env BASE_URL=http://apiserver:5000/ -w /opt/calc calculator-app:latest pytest --junit-xml=results/api_result.xml -m api || true'
+                sh 'export PATH="/usr/local/bin:$PATH" && docker cp api-tests:/opt/calc/results ./ || true'
+                sh 'export PATH="/usr/local/bin:$PATH" && docker stop apiserver api-tests 2>/dev/null || true && docker rm --force apiserver api-tests 2>/dev/null || true && docker network rm calc-test-api 2>/dev/null || true'
             }
         }
         
